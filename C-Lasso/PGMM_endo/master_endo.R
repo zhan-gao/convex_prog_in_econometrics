@@ -16,7 +16,7 @@ d = 2
 N.cut = c(0.3,0.6,1)
 N.frac = c(0.3,0.3,0.4)
 K = length(N.cut)
-a0 = matrix(c(0.4, 1.6, 1,1, 1.6, 0.4), nrow = p)
+a0 = matrix(c(0.2, 1.8, 1,1, 1.8, 0.2), nrow = p)
 Rep =500
 MaxIter = 500
 
@@ -33,7 +33,7 @@ for( N in c(100,200) ){
     
     group0 =  rep(1:K, N*N.frac);
     
-    for( t in c(10, 20, 40) ){
+    for( t in c(15, 25, 50) ){
         
         case = case + 1
         
@@ -58,8 +58,7 @@ for( N in c(100,200) ){
                                         t(a0), N, N.frac, K, p )
             correct.ratio[case, r] <- result.temp$ratio;
             se.record[case, r] <- result.temp$se;
-            
-            print(result.temp$a)
+               
         }
     }
 }

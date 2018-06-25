@@ -12,7 +12,7 @@ lasso.mosek <- function(x, y, lambda, rtol = 1e-6, verb = 0, intercept = TRUE, s
 
     if(intercept){
         if(scalex){
-            std = apply(X,2,sd)
+            std = apply(x,2,sd)
             P$c = c(rep(lambda*std, 2), rep(0, n), 1/n, 0, 0, 0)
         }else{
             P$c = c(rep(lambda, 2*p), rep(0, n), 1/n, 0, 0, 0)
@@ -32,7 +32,7 @@ lasso.mosek <- function(x, y, lambda, rtol = 1e-6, verb = 0, intercept = TRUE, s
     }else{
         
         if(scalex){
-            std = apply(X,2,sd)
+            std = apply(x,2,sd)
             P$c = c(rep(lambda*std, 2), rep(0, n), 1/n, 0, 0)
         }else{
             P$c = c(rep(lambda, 2*p), rep(0, n), 1/n, 0, 0)
