@@ -14,6 +14,7 @@ innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
     
     # Initialize the mosek problem
     Prob <- list(sense = "max");
+    Prob$dparam$intpnt_nl_tol_rel_gap <- 1e-5;
     
     # Linear constraints
     Prob$A <- Matrix( rbind( rep(1,n), H ), sparse = TRUE );
@@ -38,7 +39,7 @@ innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
         # Since the default of NLOPTR is to do minimization, need to set it as negative
         return( -mosek.out$sol$itr$pobjval );
     }else{
-        print( "WARNING: Inner loop not optimized" );
+        warning( "WARNING: Inner loop not optimized" );
         return( Inf );
     }
     
@@ -46,7 +47,7 @@ innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
 
 
 
-innerloop.cvxr <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
+innerloop.cvxr <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL, solver = "ECOS"){
     
     # Solve the inner loop optimization of Relaxed Empirical Likelihood by cvxr
     # max sum_i(log(p_i)) s.t. sum_i(p_i) = 1; |sum_i p_i*g_ij(b)|/ sigma_j <= tau
@@ -54,7 +55,7 @@ innerloop.cvxr <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
     # Give the data y, X, Z, this is a numerical function of b
     # tau is the tuning parameter
     
-    # Packages: cvxr
+    # Packages: CVXR, reticulate
     
     n <- nrow(Z); m <- ncol(Z);
     H <- MomentMatrix(y, X, Z, b);
@@ -71,19 +72,93 @@ innerloop.cvxr <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
     obj = Maximize(obj)
     
     Prob = Problem(obj, constr)
-    cvxr.out = solve(Prob)
+    cvxr.out = solve(Prob, solver = solver)
     
     
     if(cvxr.out$status == "optimal"){
         # Since the default of NLOPTR is to do minimization, need to set it as negative
         return( -cvxr.out$value );
     }else{
-        print( "WARNING: Inner loop not optimized" );
+        warning( "WARNING: Inner loop not optimized" );
         return( Inf );
     }
     
 }
 
+
+innerloop.nloptr <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
+
+	# Solve the inner loop optimization of Relaxed Empirical Likelihood by RMOSEK
+    # max sum_i(log(p_i)) s.t. sum_i(p_i) = 1; |sum_i p_i*g_ij(b)|/ sigma_j <= tau
+    
+    # Give the data y, X, Z, this is a numerical function of b
+    # tau is the tuning parameter
+    
+    # Packages: nloptr
+
+    n <- nrow(Z); m <- ncol(Z);
+    H <- MomentMatrix(y, X, Z, b);
+
+    x0 <- rep(1/n, n)
+    
+    local_opts <- list( algorithm = "NLOPT_LD_MMA",
+                        xtol_rel = 1.0e-6 )
+
+    opts = list(algorithm = "NLOPT_LD_AUGLAG",
+    			xtol_rel = 1e-5,
+    			maxeval = 5000,
+    			local_opts = local_opts)
+    
+    res = nloptr(x0 = x0,
+    	  		 eval_f = obj,
+	    	     opts = opts,
+	    	     lb = rep(0,n),
+	    	     ub = rep(1,n),
+	    	     eval_g_ineq = constr.ineq,
+	    	     eval_g_eq = constr.eq,
+	    	     H = H,
+	    	     tau = tau)
+    
+    return(res$objective)
+
+
+}
+
+obj = function(p, H, tau){
+
+	result = list(objective = -sum(log(p)),
+		 		  gradient = -1/p)
+
+    # return(-sum(log(x)))
+}
+
+# obj.grad = function(p){
+#     return(-1/p)
+# }
+
+constr.ineq = function(p, H, tau){
+    
+    n = ncol(H)
+    m = nrow(H)
+	constr = rbind(rep(1,n), rep(-1, n), H, -H) %*% p + c(-1, 1, rep(-tau, 2*m))
+	grad = rbind(rep(1,n), rep(-1, n), H, -H)
+
+	return( list(constraints = constr,
+				 jacobian = grad) )
+    
+    # return( rbind(H, -H) %*% x - tau )
+}
+
+constr.eq = function(p, H, tau){
+
+	constr = sum(p) - 1
+	grad = rep(1, length(p))
+
+	return( list(constraints = constr,
+				 jacobian = grad) )
+
+    # return(sum(x) -1)
+}
 
 REL <- function(y, X, Z, tau){
     
@@ -92,10 +167,6 @@ REL <- function(y, X, Z, tau){
     # invoke nloptr
     opts = list(algorithm = "NLOPT_LN_NELDERMEAD", xtol_rel = 1e-5, maxeval = 5000);
     nlopt.out <- nloptr(x0 = c(0,0), eval_f = innerloop, opts = opts, y = y, X = X, Z = Z, tau = tau);
-    
-    if(nlopt.out$status != 0){
-        print( "WARNING: Outer loop not optimized" )
-    }
     
     return( nlopt.out$solution )
 
@@ -107,12 +178,19 @@ REL.cvxr = function(y, X, Z, tau){
     opts = list(algorithm = "NLOPT_LN_NELDERMEAD", xtol_rel = 1e-5, maxeval = 5000);
     nlopt.out <- nloptr(x0 = c(0,0), eval_f = innerloop.cvxr, opts = opts, y = y, X = X, Z = Z, tau = tau);
     
-    if(nlopt.out$status != 0){
-        print( "WARNING: Outer loop not optimized" )
-    }
+    return( nlopt.out$solution )
+}
+
+REL.nloptr = function(y, X, Z, tau){
+    
+    opts = list(algorithm = "NLOPT_LN_NELDERMEAD", xtol_rel = 1e-5, maxeval = 5000);
+    nlopt.out <- nloptr(x0 = c(0,0), eval_f = innerloop.nloptr, opts = opts, y = y, X = X, Z = Z, tau = tau);
     
     return( nlopt.out$solution )
 }
+
+
+
 
 MomentMatrix <- function(y, X, Z, b){
     

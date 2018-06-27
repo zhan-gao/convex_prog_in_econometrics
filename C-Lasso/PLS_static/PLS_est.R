@@ -89,11 +89,12 @@ PLS.mosek <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
     return(result)
 }
 
-PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
+PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4, solver = "ECOS"){
     
     # library("Rmosek")
     # library("SparseM")
     # library("Matrix")
+    # library("reticulate")
     
     # PLS estimation by the iterative algorithm
     
@@ -132,7 +133,7 @@ PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
         
         for(k in 1:K){
             
-            print(c(r,k))
+            # print(c(r,k))
             
             # N * 1: consider it as gamma
             gamma <- pen.generate(b.out, a.out, N, p, K, k)
@@ -146,14 +147,14 @@ PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
                 ind = ( (i-1)*TT + 1 ):(i*TT)
                 id = ( (i-1)*p + 1 ):(i*p)
                 X.list[[i]] =  X[ind, ]
-                obj = obj + gamma[i] * Norm2( b[id] - a )
+                obj = obj + gamma[i] * norm2( b[id] - a )
             }
             
             XX = bdiag(X.list)
             
-            obj = Minimize( SumSquares(y - XX %*% b)/(N * TT) + obj*(lambda/N) )
+            obj = Minimize( sum_squares(y - XX %*% b)/(N * TT) + obj*(lambda/N) )
             Prob = Problem(obj)
-            cvxr.out = solve(Prob)
+            cvxr.out = solve(Prob, solver = solver)
             
             a.out[k, ] = cvxr.out$getValue(a)
             b.out[ , , k] = matrix( cvxr.out$getValue(b), N, p, byrow = TRUE)
@@ -198,7 +199,7 @@ PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
     return(result)
 }
 
-PLS.nlopt <- function(N, TT, y, X, K, lambda, R){
+PLS.nlopt <- function(N, TT, y, X, K, lambda, R, algo = "NLOPT_LN_NELDERMEAD"){
     
     # PLS estimation by the iterative algorithm
     # try OPTIMX package here
@@ -246,8 +247,9 @@ PLS.nlopt <- function(N, TT, y, X, K, lambda, R){
             # opt.out <- optimx(fn = obj, gr = obj.grad, par = init,
             #              penalty = penalty.out);
             
-            opts = list(algorithm = "NLOPT_LN_NELDERMEAD", xtol_rel = 1e-5, maxeval = 500);
-            nlopt.out <- nloptr(x0=init, eval_f = obj, opts = opts, penalty = penalty.out);
+            # opts = list(algorithm = "NLOPT_LN_NELDERMEAD", xtol_rel = 1e-5, maxeval = 500);
+            opts = list(algorithm = algo, xtol_rel = 1e-5, maxeval = 2500)
+            nlopt.out <- nloptr(x0=init, eval_f = obj, eval_grad_f = obj.grad, opts = opts, N = N, penalty = penalty.out);
             # eval_grad_f = obj.grad,
             coef.temp <- nlopt.out$solution;
             
@@ -297,7 +299,7 @@ PLS.nlopt <- function(N, TT, y, X, K, lambda, R){
 
 
 ##########################################################
-obj <- function(coeff, penalty = NULL){
+obj <- function(coeff, N = NULL, penalty = NULL){
     
     # objective function
     
@@ -314,7 +316,7 @@ obj <- function(coeff, penalty = NULL){
 }
 ##########################################################
 
-obj.grad <- function(coeff, penalty = NULL){
+obj.grad <- function(coeff, N = NULL, penalty = NULL){
     
     # gradient of the objective function
     
