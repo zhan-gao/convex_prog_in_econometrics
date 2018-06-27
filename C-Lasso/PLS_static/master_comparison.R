@@ -39,6 +39,9 @@ for( N in c(100,200) ){
             
             print( paste( "Iteration: Case",as.character(case)," - ", as.character(r), 
                           "/", as.character(Rep), sep = " ") );
+
+            # To make sure the data used in the R environment and Matlab environment are the same.
+            # We generate data first, and let programs in both environments read the data from csv files.
             
 		    filename = paste0('./simu_data/pls_data_N_', N, '_T_', TT, '_r_', r, '.csv')
 		    D = read.csv(filename, header = TRUE)
