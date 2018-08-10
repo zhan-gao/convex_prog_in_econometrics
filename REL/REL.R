@@ -160,13 +160,15 @@ constr.eq = function(p, H, tau){
     # return(sum(x) -1)
 }
 
-REL <- function(y, X, Z, tau){
+REL <- function(y, X, Z, tau, init.pt = NULL){
     
     # Package: nloptr
     
+    if(is.null(init.pt)) init.pt = rep(0, ncol(X))
+    
     # invoke nloptr
-    opts = list(algorithm = "NLOPT_LN_NELDERMEAD", xtol_rel = 1e-5, maxeval = 5000);
-    nlopt.out <- nloptr(x0 = c(0,0), eval_f = innerloop, opts = opts, y = y, X = X, Z = Z, tau = tau);
+    opts = list(algorithm = "NLOPT_LN_NELDERMEAD", xtol_rel = 1e-5, maxeval = 20000);
+    nlopt.out <- nloptr(x0 = init.pt, eval_f = innerloop, opts = opts, y = y, X = X, Z = Z, tau = tau);
     
     return( nlopt.out$solution )
 
@@ -188,8 +190,6 @@ REL.nloptr = function(y, X, Z, tau){
     
     return( nlopt.out$solution )
 }
-
-
 
 
 MomentMatrix <- function(y, X, Z, b){

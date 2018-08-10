@@ -1,6 +1,6 @@
 rm(list= ls())
 
-source("REL.R")
+source("./REL/REL.R")
 # Compare CVX + Mosek to Rmosek
 # Read the contains genrated data: 100 replications
 # Focus on innerloop only with beta = [.9; .9]
@@ -22,7 +22,7 @@ for(n in c(120, 240)){
 
 		case = case + 1
 
-		filename = paste0('Data_', n, '_', m, '.csv')
+		filename = paste0('./REL/Data_', n, '_', m, '.csv')
 		D = read.csv(filename, header = FALSE)
 
 		tau = 0.5 * sqrt( log(m) / n )
@@ -60,7 +60,7 @@ Result.mosek = cbind(L.Result[, , 1], T.Result[, , 1])
 Result.cvxr = cbind(L.Result[, , 2], T.Result[, , 2])
 Result.nloptr = cbind(L.Result[, , 3], T.Result[, , 3])
 
-save.image("Compare_Result.RData")
-write.csv(Result.mosek, "Rmosek_Result.csv")
-write.csv(Result.cvxr, "CVXR_Result.csv")
-write.csv(Result.nloptr, "Nloptr_Result.csv")
+Time.Sum = apply(T.Result, c(2,3), sum)
+colnames(Time.Sum) = c("Rmosek", "CVXR", "nloptr")
+write.csv(Time.Sum, "REL_time_compare_R.csv")
+save.image("REL_Compare_Result.RData")
