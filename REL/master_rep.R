@@ -7,8 +7,8 @@ library("nloptr")
 library("expm")
 library("CVXR")
 
-source("dgpLinearIV.R")
-source("REL.R")
+source("./REL/dgpLinearIV.R")
+source("./REL/REL.R")
 
 set.seed(99)
 
@@ -52,10 +52,8 @@ for( n in c(120,240) ){
 bias.mosek = apply(B, 2, mean) - b0[1]
 RMSE.mosek = sqrt( apply( (B - b0[1])^2, 2, mean) )
 
-save.image(file = "Result_Rep.RData")
+write.csv(cbind(bias.mosek, RMSE.mosek), "REL_Result_Rep.csv")
 
-print( "mosek result:" )
-print( paste( "Bias: ", as.character(bias.mosek), sep  = " " ) )
-print( paste( "RMSE: ", as.character(RMSE.mosek), sep  = " " ) )
-print( paste( "Time: ", as.character(apply(time.record,2,sum)), sep = " " ) )
+save.image(file = "REL_Result_Rep.RData")
+
 
