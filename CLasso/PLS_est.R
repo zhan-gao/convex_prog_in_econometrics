@@ -138,21 +138,39 @@ PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4, solver = "ECOS"){
             # N * 1: consider it as gamma
             gamma <- pen.generate(b.out, a.out, N, p, K, k)
             
-            b = Variable(N*p)
-            a = Variable(p)
+            # Commented out: Suggested by Dr. Narasimhan
+            # b = Variable(N*p)
+            # a = Variable(p)
+            # 
+            # obj = 0
+            # End Commented out
             
-            obj = 0
             X.list = list()
             for(i in 1:N){
                 ind = ( (i-1)*TT + 1 ):(i*TT)
                 id = ( (i-1)*p + 1 ):(i*p)
                 X.list[[i]] =  X[ind, ]
-                obj = obj + gamma[i] * norm2( b[id] - a )
+                # Commented out: Suggested by Dr. Narasimhan
+                # obj = obj + gamma[i] * norm2( b[id] - a )
+                # End Commented out
             }
+            
+            ## Code added
+            b = Variable(p, N)
+            a = Variable(p)
+            A <- matrix(1, nrow = 1, ncol = N)
+            obj1 <- norm2(b - a %*% A, axis = 2) %*% gamma
+            ## End Code added
             
             XX = bdiag(X.list)
             
-            obj = Minimize( sum_squares(y - XX %*% b)/(N * TT) + obj*(lambda/N) )
+            ## Original commented out
+            ## obj = Minimize( sum_squares(y - XX %*% b)/(N * TT) + obj*(lambda/N) )
+            ## End Original commented out
+            
+            ## Code added and modified
+            obj = Minimize( sum_squares(y - XX %*% vec(b))/(N * TT) + obj1*(lambda/N) )
+            ## End Code added and modified
             Prob = Problem(obj)
             cvxr.out = solve(Prob, solver = solver)
             
