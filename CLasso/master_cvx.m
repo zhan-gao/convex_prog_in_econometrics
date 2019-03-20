@@ -22,7 +22,7 @@ correct_ratio = zeros(30, 6);
 se_record = zeros(30, 6);
 time_cvx = zeros(30, 6);
 
-Rep = 500;
+Rep = 30;
 
 c = 0;
 err = zeros(Rep, 6);
@@ -44,7 +44,7 @@ for N = [100, 200]
             
             try 
         
-                file_name = strcat('./simu_data_full/pls_data_N_', num2str(N), '_T_', ...
+                file_name = strcat('./simu_data/pls_data_N_', num2str(N), '_T_', ...
                                     num2str(T), '_r_', num2str(r), '.csv');
                 D = csvread(file_name, 1, 0);
 

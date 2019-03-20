@@ -18,9 +18,14 @@ source("./CLasso/master_rep.R")
 
 # Generate data explicitly since we need to compare across platforms 
 # 	(R v.s Matlab)
+
 # source("./CLasso/data_gen.R")
 
-# For the comparison among all methods, we provide a small scale sample 
+# It will generate a full set of sample for 500 replications.
+# Considering ECOS is sensitive to data input sometimes, for comparison reasons,
+# we check whether it works with ECOS or not when generate data.
+
+# For the comparison among all methods, we also provide a small scale sample 
 #	(30 replications)
 # To generate the full 500 replication data, uncomment the data_gen.R line
 # 	and generate data explicitly first, and then change the 
