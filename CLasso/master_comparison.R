@@ -28,7 +28,7 @@ for( N in c(100,200) ){
     
     group0 <-  rep(1:K, N*N.frac);
     
-    for( TT in c(10, 25, 50) ){
+    for( TT in c(15, 25, 50) ){
         
         case = case + 1;
 

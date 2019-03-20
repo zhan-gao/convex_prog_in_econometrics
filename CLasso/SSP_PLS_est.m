@@ -36,15 +36,14 @@ a_out  = zeros(K, p);
 b_old = ones(N, p);
 a_old = zeros(1, p);
 
-cvx_quiet(true)
-
-cvx_solver mosek 
+% cvx_quiet(true)
+% 
+% cvx_solver mosek 
 % this line can be commented out if MOSEK is not installed
 % the CVX default solver runs much more slowly than mosek
 
 for r = 1:R
     for k = 1:K
-        
         
         for kk = setdiff(1:K, k)
             pen(:, kk) =  norms( bsxfun(@minus, b_out(:, :, kk), a_out(kk, :) ), 2, 2 );
