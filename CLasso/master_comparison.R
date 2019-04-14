@@ -17,7 +17,7 @@ N.frac <- c(0.3,0.3,0.4);
 K <- length(N.cut);
 a0 <- matrix(c(0.4, 1.6, 1,1, 1.6, 0.4), nrow = p);
 Rep <- 30;
-MaxIter <- 30;
+MaxIter <- 500;
 
 correct.ratio <- se.record <- time.record <- array(0,c(6,Rep,3));
 case = 0;

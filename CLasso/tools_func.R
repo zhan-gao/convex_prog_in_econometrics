@@ -12,7 +12,7 @@ group.coerce <- function(group.est, a.out, group0, a0, N, N.frac, K, p){
     }
     
     if( sum(group == 0) ){
-        noquote("Error: some inidividual are not classfied!")
+        noquote("Error: some inidividuals are not classfied!")
     }
     
     # correct ratio

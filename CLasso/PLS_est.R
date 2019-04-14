@@ -71,7 +71,7 @@ PLS.mosek <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
     group.est <- apply(dist,1,which.min);
     
     
-    if( sum( as.numeric( table(group.est) ) > p ) == 3 ){
+    if( sum( as.numeric( table(group.est) ) > p ) == K ){
         # Post-Lasso estimation
         a.out <- post.lasso( group.est, y, X, K, p, N, TT );
     }
@@ -199,7 +199,7 @@ PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4, solver = "ECOS"){
     group.est <- apply(dist,1,which.min);
     
     
-    if( sum( as.numeric( table(group.est) ) > p ) == 3 ){
+    if( sum( as.numeric( table(group.est) ) > p ) == K ){
         # Post-Lasso estimation
         a.out <- post.lasso( group.est, y, X, K, p, N, TT );
     }
@@ -298,7 +298,7 @@ PLS.nlopt <- function(N, TT, y, X, K, lambda, R, algo = "NLOPT_LN_NELDERMEAD"){
     
     # Check if all groups are good for postlasso
     
-    if( sum( as.numeric( table(group.est) ) > p ) == 3 ){
+    if( sum( as.numeric( table(group.est) ) > p ) == K ){
         # Post-Lasso estimation
         a.out <- post.lasso( group.est, y, X, K, p, N, TT );
     }
