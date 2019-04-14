@@ -129,8 +129,10 @@ def PLS_cvxpy(N,TT,y,X,K,lambda_,R,tol = 0.0001):
         
             obj = cp.Minimize(cp.sum_squares(y-cp.reshape((XX @ cp.vec(b)),(N*TT,1)))/(N * TT) + obj1 * (lambda_/N))
             prob = cp.Problem(obj)
-#            cvxpy_out = prob.solve(solver=cp.ECOS)
-            cvxpy_out = prob.solve(solver=cp.MOSEK)
+            try:
+                prob.solve(solver=cp.MOSEK)
+            except:
+                prob.solve(solver=cp.ECOS)
             
             a_out[k-1] = a.value.reshape(1,p)
             b_out[k-1] = b.value.T        
