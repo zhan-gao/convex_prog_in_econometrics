@@ -61,7 +61,7 @@ def post_lasso(group_est,y,X,K,p,N,TT):
 # summarize simualtion results
 
 def group_coerce(group_est, a_out, group0, a0, N, N_frac, K, p):
-    a_est = np.array([[None]*2]*3)
+    a_est = np.array([[0.0]*2]*3)
     group = np.array([None]* N)
     
     for k in range(K):
@@ -77,7 +77,6 @@ def group_coerce(group_est, a_out, group0, a0, N, N_frac, K, p):
     
     # Correct ratio
     ratio = sum( group == group0 ) / N
-    
     # weighted se
     weighted_se = sum(( a_est[:, 1] - a0[:, 1] )**2 * N_frac )
     
@@ -130,8 +129,8 @@ def PLS_cvxpy(N,TT,y,X,K,lambda_,R,tol = 0.0001):
         
             obj = cp.Minimize(cp.sum_squares(y-cp.reshape((XX @ cp.vec(b)),(N*TT,1)))/(N * TT) + obj1 * (lambda_/N))
             prob = cp.Problem(obj)
-            # cvxpy_out = prob.solve(solver=cp.ECOS)
-            cvxpy_out = prob.solve(solver="MOSEK")
+#            cvxpy_out = prob.solve(solver=cp.ECOS)
+            cvxpy_out = prob.solve(solver=cp.MOSEK)
             
             a_out[k-1] = a.value.reshape(1,p)
             b_out[k-1] = b.value.T        
@@ -153,7 +152,6 @@ def PLS_cvxpy(N,TT,y,X,K,lambda_,R,tol = 0.0001):
     count = np.unique(group_est,return_counts = True)   
     if np.count_nonzero(count[1] > p) == K:
         a_out = post_lasso(group_est,y,X,K,p,N,TT)
-        print("Post Lasso yes!")
 
     b_est = np.empty(N*p).reshape(N,p)
     for i in range (1,N+1):
@@ -172,13 +170,15 @@ N_frac = np.array([0.3, 0.3, 0.4])
 
 
 Rep = 500
-MaxIter = 30
+MaxIter = 500
 tol = 1e-4
 K = 3
 
 p = 2
 
-correct_ratio = se_record = time_record = np.array([[None] * Rep] * 6)
+correct_ratio = np.array([[None] * Rep] * 6)
+se_record = np.array([[None] * Rep] * 6)
+time_record = np.array([[None] * Rep] * 6)
 
 case = -1
 for N in [100, 200]:
@@ -215,7 +215,7 @@ for N in [100, 200]:
             se_record[case, r] = se
             
 # %%
-rmse = np.sqrt( np.mean(se_record, 1) )
+rmse = np.sqrt( np.mean(se_record, 1).astype(float) )
 cr = np.mean(correct_ratio, 1)
 time_sum = np.sum(time_record, 1)
 
