@@ -16,6 +16,7 @@ PLS.mosek <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
     #   b_est: estimated beta (N*p)
     #   a_out: estimated alpha (K*p)
     #   group_est: estimated group identity (N*1)
+    #   converge(boolean: converge or not)
     
     
     p <- dim(X)[2];
@@ -84,7 +85,7 @@ PLS.mosek <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
     }
     
     result <- list( b.est = b.est, a.out = a.out, 
-                    group.est = group.est );
+                    group.est = group.est, converge = (r < R));
     
     return(result)
 }
