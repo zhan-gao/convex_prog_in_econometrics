@@ -1,5 +1,4 @@
 library("classo")
-library("CVXR")
 
 tol <- 1e-4
 MaxIter <- 80 # In Wei's code, R = 80: Need to check whether converge or not
@@ -25,7 +24,7 @@ TT <- max(data$year)
 # CASE 2: (y, X2) drop light
 # CASE 3: (y, X3) drop light and national tax
 
-case <- 1
+case <- 3
 
 y <- as.matrix(data$ngdp)
 X1 <- as.matrix(data[, -c(1:3, 9)])
@@ -123,7 +122,7 @@ for(c in 1:num_c){
             
             group_k <- (pls_out$group.est == k)
             
-            if(sum(group_k) >= 2*p/TT){
+            if(sum(group_k) > 2*p/TT){
                 
                 Ind <- 1:N
                 group_ind <- Ind[group_k]
@@ -160,9 +159,7 @@ K_opt <- K_temp
 result <- PLS.mosek(N, TT, yy, XX, K_opt, lambda_opt, beta0, MaxIter, tol)
 
 group_result <- as.data.frame( readxl::read_xls("./China GDP/province.xls", col_names = FALSE) )
-group_result[[2]] <- result$group_est
+group_result$group <- result$group.est
 colnames(group_result) <- c("province","group")
 
-write.csv(group_result, "./China GDP/group_result.csv")
-
-
+write.csv(group_result, paste0("./China GDP/group_result_case_", case, ".csv"))
