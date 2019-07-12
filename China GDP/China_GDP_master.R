@@ -24,7 +24,7 @@ TT <- max(data$year)
 # CASE 2: (y, X2) drop light
 # CASE 3: (y, X3) drop light and national tax
 
-case <- 3
+case <- 2
 
 y <- as.matrix(data$ngdp)
 X1 <- as.matrix(data[, -c(1:3, 9)])
@@ -162,4 +162,10 @@ group_result <- as.data.frame( readxl::read_xls("./China GDP/province.xls", col_
 group_result$group <- result$group.est
 colnames(group_result) <- c("province","group")
 
+
+write(
+    paste("Case", as.character(case), "Time:", as.character(sum(Time))),
+    file = "./China GDP/CPU_time.txt",
+    append = TRUE
+)
 write.csv(group_result, paste0("./China GDP/group_result_case_", case, ".csv"))
