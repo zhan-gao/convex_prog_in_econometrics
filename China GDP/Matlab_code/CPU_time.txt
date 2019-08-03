@@ -1,0 +1,3 @@
+Case 1 Time: 692.23
+Case 2 Time: 774.96
+Case 3 Time: 337.10
