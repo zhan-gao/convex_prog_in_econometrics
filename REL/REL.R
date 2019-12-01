@@ -14,7 +14,8 @@ innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
     
     # Initialize the mosek problem
     Prob <- list(sense = "max");
-    Prob$dparam$intpnt_nl_tol_rel_gap <- 1e-5;
+    # Prob$dparam$intpnt_nl_tol_rel_gap <- 1e-5;
+    prob$dparam <- list(INTPNT_CO_TOL_REL_GAP=1e-5)
     
     # Linear constraints
     Prob$A <- Matrix( rbind( rep(1,n), H ), sparse = TRUE );
