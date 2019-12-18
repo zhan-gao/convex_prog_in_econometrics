@@ -14,6 +14,7 @@ DGP.static <- function(N, TT, p, N.cut, a0){
     # y: TN * 1, demeaned
     # y_{i=1,t=1}, ..., y_{i=1, t=T}, y_{i=2, t=1}, ...
     
+    K <- length(N.cut)
     
     e <- matrix( rnorm(N*TT*p), nrow = N*TT);
     u <- rnorm(N);
