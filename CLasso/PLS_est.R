@@ -90,6 +90,157 @@ PLS.mosek <- function(N, TT, y, X, K, lambda, R, tol = 1e-4){
     return(result)
 }
 
+
+PLS.cvxr.nodcp <- function(N, TT, y, X, K, lambda, R, tol = 1e-4, solver = "ECOS"){
+    
+    # library("Rmosek")
+    # library("SparseM")
+    # library("Matrix")
+    # library("reticulate")
+    
+    # PLS estimation by the iterative algorithm
+    
+    # INPUT Arg:
+    #   dimensions N, TT
+    #   data y(TN * 1), X(TN * P)
+    #   tuning parameter lambda
+    #   maximum number of iteration R
+    
+    # OUTPUT:
+    #   b_est: estimated beta (N*p)
+    #   a_out: estimated alpha (K*p)
+    #   group_est: estimated group identity (N*1)
+    
+    
+    p <- dim(X)[2];
+    
+    # Use individual regression result as the initial value
+    beta0 = matrix(0, N, p);
+    for(i in 1:N){
+        ind <- ( (i-1)*TT+1 ):(i*TT); 
+        yy <- y[ind, ]
+        XX <- X[ind, ]
+        beta0[i, ] <- solve( t(XX) %*% XX ) %*% ( t(XX) %*% yy );
+    }
+    
+    
+    
+    b.out <- array( beta0, c(N,p,K) );
+    a.out <- matrix(0,K,p);
+    
+    b.old <- matrix(1,N,p);
+    a.old <- matrix(1,1,p); 
+    
+    for(r in 1:R){
+        
+        for(k in 1:K){
+            
+            # print(c(r,k))
+            
+            # N * 1: consider it as gamma
+            gamma <- pen.generate(b.out, a.out, N, p, K, k)
+            
+            # Commented out: Suggested by Dr. Narasimhan
+            # b = Variable(N*p)
+            # a = Variable(p)
+            # 
+            # obj = 0
+            # End Commented out
+            
+            X.list = list()
+            for(i in 1:N){
+                ind = ( (i-1)*TT + 1 ):(i*TT)
+                id = ( (i-1)*p + 1 ):(i*p)
+                X.list[[i]] =  X[ind, ]
+                # Commented out: Suggested by Dr. Narasimhan
+                # obj = obj + gamma[i] * norm2( b[id] - a )
+                # End Commented out
+            }
+            
+            ## Code added
+            b = Variable(p, N)
+            a = Variable(p)
+            A <- matrix(1, nrow = 1, ncol = N)
+            obj1 <- t(norm2(b - a %*% A, axis = 2)) %*% gamma
+            ## End Code added
+            
+            XX = bdiag(X.list)
+            
+            ## Original commented out
+            ## obj = Minimize( sum_squares(y - XX %*% b)/(N * TT) + obj*(lambda/N) )
+            ## End Original commented out
+            
+            ## Code added and modified
+            obj = Minimize( sum_squares(y - XX %*% vec(b))/(N * TT) + obj1*(lambda/N) )
+            ## End Code added and modified
+            Prob = Problem(obj)
+            
+            prob_data <- get_problem_data(Prob, solver = "ECOS")
+            if (packageVersion("CVXR") > "0.99-7") {
+                ECOS_dims <- ECOS.dims_to_solver_dict(prob_data$data[["dims"]])
+            } else {
+                ECOS_dims <- prob_data$data[["dims"]]
+            }
+            solver_output <- ECOSolveR::ECOS_csolve(c = prob_data$data[["c"]],
+                                                    G = prob_data$data[["G"]],
+                                                    h = prob_data$data[["h"]],
+                                                    dims = ECOS_dims,
+                                                    A = prob_data$data[["A"]],
+                                                    b = prob_data$data[["b"]])
+            
+            if (packageVersion("CVXR") > "0.99-7") {
+                direct_soln <- unpack_results(Prob, solver_output, prob_data$chain, prob_data$inverse_data)
+            } else {
+                direct_soln <- unpack_results(Prob, "ECOS", solver_output)
+            }
+            
+            a.out[k, ] = direct_soln$getValue(a)
+            b.out[, , k] = matrix(direct_soln$getValue(b), N, p, byrow = TRUE)
+            
+            # cvxr.out = solve(Prob, solver = solver)
+            # a.out[k, ] = cvxr.out$getValue(a)
+            # b.out[ , , k] = matrix( cvxr.out$getValue(b), N, p, byrow = TRUE)
+            
+        }
+        
+        # Check the convergence criterion
+        a.new <- a.out[K,];
+        b.new <- b.out[ , ,K];
+        
+        if(criterion(a.old,a.new,b.old,b.new,tol)){
+            break;
+        }
+        # Update
+        a.old <- a.out[K,];
+        b.old <- b.out[ , ,K];
+    }
+    
+    # put b.out to nearest a.out and get the group estimation
+    
+    a.out.exp <- aperm( array(a.out, c(K,p,N)), c(3,2,1) );
+    d.temp <- (b.out - a.out.exp)^2;
+    dist <- sqrt( apply(d.temp, c(1,3), sum) );
+    group.est <- apply(dist,1,which.min);
+    
+    
+    if( sum( as.numeric( table(group.est) ) > p ) == K ){
+        # Post-Lasso estimation
+        a.out <- post.lasso( group.est, y, X, K, p, N, TT );
+    }
+    
+    
+    b.est <- matrix(999, N, p);
+    for(i in 1:N){
+        group <- group.est[i];
+        b.est[i,] <- a.out[group, ];
+    }
+    
+    result <- list( b.est = b.est, a.out = a.out, 
+                    group.est = group.est );
+    
+    return(result)
+}
+
 PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4, solver = "ECOS"){
     
     # library("Rmosek")
@@ -160,7 +311,7 @@ PLS.cvxr <- function(N, TT, y, X, K, lambda, R, tol = 1e-4, solver = "ECOS"){
             b = Variable(p, N)
             a = Variable(p)
             A <- matrix(1, nrow = 1, ncol = N)
-            obj1 <- norm2(b - a %*% A, axis = 2) %*% gamma
+            obj1 <- t(norm2(b - a %*% A, axis = 2)) %*% gamma
             ## End Code added
             
             XX = bdiag(X.list)

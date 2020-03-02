@@ -4,7 +4,6 @@ rm(list = ls())
 library("Rmosek")
 library("SparseM")
 library("Matrix")
-library("nloptr")
 library("CVXR")
 
 source("./CLasso/DGP_static.R")
@@ -19,7 +18,7 @@ a0 <- matrix(c(0.4, 1.6, 1, 1, 1.6, 0.4), nrow = p)
 Rep <- 30
 MaxIter <- 500
 
-correct.ratio <- se.record <- time.record <- array(0, c(6, Rep, 2))
+correct.ratio <- se.record <- time.record <- array(0, c(6, Rep, 4))
 case = 0
 
 set.seed(200)
@@ -56,7 +55,7 @@ for (N in c(100, 200)) {
             correct.ratio[case, r, 1] <- result.temp$ratio
             se.record[case, r, 1] <- result.temp$se
             
-            # CVXR
+            # CVXR + ECOS
             t.begin <- Sys.time()
             pls <- PLS.cvxr(N, TT, y, X, K, lambda, MaxIter)
             t.end <- Sys.time()
@@ -68,6 +67,32 @@ for (N in c(100, 200)) {
             correct.ratio[case, r, 2] <- result.temp$ratio
             se.record[case, r, 2] <- result.temp$se
             
+            # CVXR + ECOS + nodcp
+            t.begin <- Sys.time()
+            pls <- PLS.cvxr.nodcp(N, TT, y, X, K, lambda, MaxIter)
+            t.end <- Sys.time()
+            
+            time.record[case, r, 3] <- t.end - t.begin
+            
+            result.temp <- group.coerce(pls$group.est, pls$a.out, group0, t(a0), 
+                                        N, N.frac, K, p)
+            correct.ratio[case, r, 3] <- result.temp$ratio
+            se.record[case, r, 3] <- result.temp$se
+            
+            # CVXR + Mosek
+            t.begin <- proc.time()
+            pls <- PLS.cvxr(N, TT, y, X, K, lambda, MaxIter, solver = "MOSEK")
+            t.end <- proc.time()
+            
+            time.record[case, r, 4] <- (t.end - t.begin)[3]
+            
+            result.temp <- group.coerce(pls$group.est, pls$a.out, group0, t(a0), 
+                                        N, N.frac, K, p)
+            correct.ratio[case, r, 4] <- result.temp$ratio
+            se.record[case, r, 4] <- result.temp$se
+            
+            
+            print(time.record[case, r, ])
         }
     }
 }
