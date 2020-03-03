@@ -1,4 +1,5 @@
 library("classo")
+library("Rmosek")
 
 tol <- 1e-4
 MaxIter <- 80 # In Wei's code, R = 80: Need to check whether converge or not
@@ -24,7 +25,7 @@ TT <- max(data$year)
 # CASE 2: (y, X2) drop light
 # CASE 3: (y, X3) drop light and national tax
 
-case <- 2
+case <- 3
 
 y <- as.matrix(data$ngdp)
 X1 <- as.matrix(data[, -c(1:3, 9)])
@@ -82,6 +83,7 @@ c_seq <- c_min * ss^(0:(num_c-1))
 # Result container
 IC_total <- matrix(0, K_max, num_c)
 Time <- matrix(0, K_max, num_c)
+Time_cvxr <- matrix(0, K_max, num_c)
 
 for(c in 1:num_c){
     
@@ -114,6 +116,20 @@ for(c in 1:num_c){
                              post_est = FALSE,
                              bias_corr = FALSE)
         Time[K, c] <- Sys.time() - t0
+        
+        t0 <- Sys.time()
+        pls_out_cvxr <- PLS.cvxr(N,
+                             TT,
+                             yy,
+                             XX,
+                             K,
+                             lambda,
+                             beta0,
+                             MaxIter,
+                             tol,
+                             post_est = FALSE,
+                             bias_corr = FALSE)
+        Time_cvxr[K, c] <- Sys.time() - t0
         
         Q <- rep(1e10, K)
         
@@ -164,7 +180,7 @@ colnames(group_result) <- c("province","group")
 
 
 write(
-    paste("Case", as.character(case), "Time:", as.character(sum(Time))),
+    paste("Case", as.character(case), "Time:", as.character(sum(Time)), "Time_cvxr:", as.character(sum(Time_cvxr))),
     file = "./China GDP/CPU_time.txt",
     append = TRUE
 )

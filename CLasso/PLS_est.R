@@ -176,23 +176,14 @@ PLS.cvxr.nodcp <- function(N, TT, y, X, K, lambda, R, tol = 1e-4, solver = "ECOS
             Prob = Problem(obj)
             
             prob_data <- get_problem_data(Prob, solver = "ECOS")
-            if (packageVersion("CVXR") > "0.99-7") {
-                ECOS_dims <- ECOS.dims_to_solver_dict(prob_data$data[["dims"]])
-            } else {
-                ECOS_dims <- prob_data$data[["dims"]]
-            }
+            ECOS_dims <- ECOS.dims_to_solver_dict(prob_data$data[["dims"]])
             solver_output <- ECOSolveR::ECOS_csolve(c = prob_data$data[["c"]],
                                                     G = prob_data$data[["G"]],
                                                     h = prob_data$data[["h"]],
                                                     dims = ECOS_dims,
                                                     A = prob_data$data[["A"]],
                                                     b = prob_data$data[["b"]])
-            
-            if (packageVersion("CVXR") > "0.99-7") {
-                direct_soln <- unpack_results(Prob, solver_output, prob_data$chain, prob_data$inverse_data)
-            } else {
-                direct_soln <- unpack_results(Prob, "ECOS", solver_output)
-            }
+            direct_soln <- unpack_results(Prob, solver_output, prob_data$chain, prob_data$inverse_data)
             
             a.out[k, ] = direct_soln$getValue(a)
             b.out[, , k] = matrix(direct_soln$getValue(b), N, p, byrow = TRUE)
