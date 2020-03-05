@@ -1,5 +1,8 @@
-innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
-    
+innerloop <- function(b,
+                      y = NULL,
+                      X = NULL,
+                      Z = NULL,
+                      tau = NULL) {
     # Solve the inner loop optimization of Relaxed Empirical Likelihood by RMOSEK
     # max sum_i(log(p_i)) s.t. sum_i(p_i) = 1; |sum_i p_i*g_ij(b)|/ sigma_j <= tau
     
@@ -8,39 +11,51 @@ innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
     
     # Packages: Rmosek, Matrix
     
-    n <- nrow(Z); m <- ncol(Z);
-    H <- MomentMatrix(y, X, Z, b);
+    n <- nrow(Z)
+    m <- ncol(Z)
+    
+    H <- MomentMatrix(y, X, Z, b)
     
     # Initialize the mosek problem
-    Prob <- list(sense = "max");
-    # Prob$dparam$intpnt_nl_tol_rel_gap <- 1e-5;
-    Prob$dparam <- list(INTPNT_CO_TOL_REL_GAP=1e-5)
+    Prob <- list(sense = "max")
     
-    # Linear constraints
-    Prob$A <- Matrix( rbind( rep(1,n), H ), sparse = TRUE );
-    Prob$bc <- rbind( c(1, rep(-tau, m)), c(1, rep(tau, m)) );
-    Prob$bx <- rbind( rep(0,n), rep(1,n) );
+    # Prob$dparam$intpnt_nl_tol_rel_gap <- 1e-5;
+    Prob$dparam <- list(INTPNT_CO_TOL_REL_GAP = 1e-5)
     
     # Linear coefficients of the objective
-    Prob$c <- rep(0, n);
-    # Logarithm part of the objective
-    NUMOPRO <- n;
-    opro <- matrix( list(), nrow = 5, ncol = NUMOPRO );
-    rownames(opro) <- c("type", "j" , "f", "g", "h");
-    for( i in 1:n ){
-        opro[ , i] <- list("LOG", i, 1.0, 1.0, 0);
+    Prob$c <- c(rep(0, n), rep(1, n), rep(0, n))
+    
+    # Linear constraints
+    H_tilde <- Matrix(rbind(rep(1, n), H), sparse = TRUE)
+    A <- rbind(cbind(H_tilde, Matrix(0, m + 1, 2 * n, sparse = TRUE)),
+               cbind(Matrix(0, n, 2 * n, sparse = TRUE), Diagonal(n)))
+    Prob$A <- A
+    Prob$bc <- rbind(c(1, rep(-tau, m), rep(1, n)), c(1, rep(tau, m), rep(1, n)))
+    Prob$bx <- rbind(c(rep(0, n), rep(-Inf, n), rep(1, n)), 
+                     c(rep(1, n), rep(0, n), rep(1, n)))
+    
+    # Exponential Cones
+    NUMCONES <- n
+    Prob$cones <- matrix(list(), nrow = 2, ncol = NUMCONES)
+    rownames(Prob$cones) <- c("type", "sub")
+    for (i in 1:n) {
+        Prob$cones[, i] <- list("PEXP", c(i, 2 * n + i, n + i))
     }
-    Prob$scopt = list( opro = opro )
     
     # Invoke Mosek
-    mosek.out <- mosek(Prob, opts = list(verbose = 0, soldetail = 1));
+    mosek.out <-
+        mosek(Prob, opts = list(verbose = 0, soldetail = 1))
     
-    if(mosek.out$sol$itr$solsta == "OPTIMAL"){
+    
+    if (mosek.out$sol$itr$solsta == "OPTIMAL") {
         # Since the default of NLOPTR is to do minimization, need to set it as negative
-        return( -mosek.out$sol$itr$pobjval );
-    }else{
-        warning( "WARNING: Inner loop not optimized" );
-        return( Inf );
+        return(-mosek.out$sol$itr$pobjval)
+        
+    } else{
+        warning("WARNING: Inner loop not optimized")
+        
+        return(Inf)
+        
     }
     
 }
