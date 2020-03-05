@@ -6,7 +6,6 @@ library("SparseM")
 library("Matrix")
 library("CVXR")
 
-source("./CLasso/DGP_static.R")
 source("./CLasso/PLS_est.R")
 source("./CLasso/tools_func.R")
 

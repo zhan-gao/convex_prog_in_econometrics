@@ -1,4 +1,3 @@
-
 innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
     
     # Solve the inner loop optimization of Relaxed Empirical Likelihood by RMOSEK
@@ -15,7 +14,7 @@ innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
     # Initialize the mosek problem
     Prob <- list(sense = "max");
     # Prob$dparam$intpnt_nl_tol_rel_gap <- 1e-5;
-    prob$dparam <- list(INTPNT_CO_TOL_REL_GAP=1e-5)
+    Prob$dparam <- list(INTPNT_CO_TOL_REL_GAP=1e-5)
     
     # Linear constraints
     Prob$A <- Matrix( rbind( rep(1,n), H ), sparse = TRUE );
@@ -45,8 +44,6 @@ innerloop <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL){
     }
     
 }
-
-
 
 innerloop.cvxr <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL, solver = "ECOS"){
     
@@ -79,6 +76,54 @@ innerloop.cvxr <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL, solver =
     if(cvxr.out$status == "optimal"){
         # Since the default of NLOPTR is to do minimization, need to set it as negative
         return( -cvxr.out$value );
+    }else{
+        warning( "WARNING: Inner loop not optimized" );
+        return( Inf );
+    }
+    
+}
+
+innerloop.cvxr.nodcp <- function(b, y = NULL, X = NULL, Z = NULL, tau = NULL, solver = "ECOS"){
+    
+    # Solve the inner loop optimization of Relaxed Empirical Likelihood by cvxr
+    # max sum_i(log(p_i)) s.t. sum_i(p_i) = 1; |sum_i p_i*g_ij(b)|/ sigma_j <= tau
+    
+    # Give the data y, X, Z, this is a numerical function of b
+    # tau is the tuning parameter
+    
+    # Packages: CVXR, reticulate
+    
+    n <- nrow(Z); m <- ncol(Z);
+    H <- MomentMatrix(y, X, Z, b);
+    
+    p = Variable(n)
+    
+    constr = list( sum(p)==1, 
+                   p>=0,
+                   p<=1,
+                   H%*%p >= -tau,
+                   H%*%p <= tau )
+    
+    obj = sum( log(p) )
+    obj = Maximize(obj)
+    
+    Prob = Problem(obj, constr)
+    
+    prob_data <- get_problem_data(Prob, solver = "ECOS")
+    ECOS_dims <- ECOS.dims_to_solver_dict(prob_data$data[["dims"]])
+    solver_output <- ECOSolveR::ECOS_csolve(c = prob_data$data[["c"]],
+                                            G = prob_data$data[["G"]],
+                                            h = prob_data$data[["h"]],
+                                            dims = ECOS_dims,
+                                            A = prob_data$data[["A"]],
+                                            b = prob_data$data[["b"]])
+    direct_soln <- unpack_results(Prob, solver_output, prob_data$chain, prob_data$inverse_data)
+    
+    # cvxr.out = solve(Prob, solver = solver)
+    
+    if(direct_soln$status == "optimal"){
+        # Since the default of NLOPTR is to do minimization, need to set it as negative
+        return( -direct_soln$value );
     }else{
         warning( "WARNING: Inner loop not optimized" );
         return( Inf );

@@ -47,6 +47,11 @@ for(n in c(120, 240)){
 			t0 = Sys.time()
 			L.nloptr = -innerloop.nloptr(b, y, X, Z, tau)
 			t.nloptr = Sys.time() - t0
+			
+			t0 = Sys.time()
+			L.cvxr.nodcp = -innerloop.cvxr.nodcp(b, y, X, Z, tau)
+			t.cvxr.nodcp = Sys.time() - t0
+			
 
 			T.Result[r, case, ] = c(t.mosek, t.cvxr, t.nloptr)
 			L.Result[r, case, ] = c(L.mosek, L.cvxr, L.nloptr)
