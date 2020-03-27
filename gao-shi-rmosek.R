@@ -4,6 +4,32 @@
 # by Zhan Gao and Zhentao Shi
 # ==========================================================================
 
+# Session Information
+# R version 3.6.2 (2019-12-12)
+# Platform: x86_64-w64-mingw32/x64 (64-bit)
+# Running under: Windows 10 x64 (build 17763)
+# 
+# Matrix products: default
+# 
+# locale:
+# [1] LC_COLLATE=English_United States.1252 
+# [2] LC_CTYPE=English_United States.1252   
+# [3] LC_MONETARY=English_United States.1252
+# [4] LC_NUMERIC=C                          
+# [5] LC_TIME=English_United States.1252    
+# 
+# attached base packages:
+#     [1] stats     graphics  grDevices utils     datasets  methods   base     
+# 
+# other attached packages:
+#     [1] CVXR_1.0      expm_0.999-4  nloptr_1.2.2  SparseM_1.78  Rmosek_9.0.96
+# [6] Matrix_1.2-18
+# 
+# loaded via a namespace (and not attached):
+#     [1] bit_1.1-15.2    compiler_3.6.2  R6_2.4.1        tools_3.6.2    
+# [5] gmp_0.5-13.6    Rcpp_1.0.3      bit64_0.9-7     grid_3.6.2     
+# [9] Rmpfr_0.8-1     lattice_0.20-38
+
 # ==========================================================================
 # Replication of Table 1: CLasso Results
 # ==========================================================================
@@ -23,9 +49,11 @@ source("./CLasso/master_rep.R")
 #	"./CLasso/master_comparison.R", "./CLasso/master_cvx.m" 
 # 	"./CLasso/cvxpy_master.py" by change the variable Rep from 30 to 500
 
+# Matlab 2018b + CVX version 2.2
 # The CVX results are generated in Matlab: Run "./CLasso/master_cvx.m" in Matlab
 # The results are stored in "CVX_PLS_Result.csv"
 
+# Python 3.7.3 (default, Apr 24 2019, 15:29:51) [MSC v.1915 64 bit (AMD64)]
 # The CVXPY results are generated in Python: Run "./CLasso/cvxpy_master.py" in Python
 # The results are stored in "python_result.csv"
 
