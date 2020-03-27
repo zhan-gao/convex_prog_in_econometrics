@@ -171,7 +171,7 @@ N_cut = np.array([0.3, 0.6, 1])
 N_frac = np.array([0.3, 0.3, 0.4])
 
 
-Rep = 30
+Rep = 500
 MaxIter = 500
 tol = 1e-4
 K = 3
@@ -196,7 +196,7 @@ for N in [100, 200]:
             
             print([N,T,r])
             
-            file_name = "./simu_data/pls_data_N_" + str(N) + "_T_" + str(T) + "_r_" + str(r+1) + ".csv"
+            file_name = "./simu_data_full/pls_data_N_" + str(N) + "_T_" + str(T) + "_r_" + str(r+1) + ".csv"
             data = pd.read_csv(file_name)
             X_data = np.array(data[["V2","V3"]])
             y_data = np.array(data[["V1"]])
@@ -222,4 +222,4 @@ cr = np.mean(correct_ratio, 1)
 time_sum = np.sum(time_record, 1)
 
 result = pd.DataFrame(data = {'RMSE': rmse, 'Correct_Ratio': cr, 'Time': time_sum})
-result.to_csv('Python_result.csv')
+result.to_csv('Python_result_full.csv')
