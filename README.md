@@ -1,6 +1,6 @@
-# Two Examples of Convex-Programming-Based High-Dimensional Econometric Estimators
+# Implementing Convex Optimization in R: Two Econometric Examples
 
-This repository host code for methods mentioned in the paper *Two Examples of Convex-Programming-Based High-Dimensional Econometric Estimators* by Zhan Gao and Zhentao Shi and replication of the simulation results.
+This repository host code for methods mentioned in the paper *Implementing Convex Optimization in R: Two Econometric Examples* by Zhan Gao and Zhentao Shi and replication of the simulation results.
 
 One can easily use the `gao-shi-rmosek.R` file to replicate the simulation studies.
 
