@@ -1,4 +1,4 @@
-# Implementing Convex Optimization in R: Two Econometric Examples
+# Introduction
 
 This repository hosts the files and code for
 
