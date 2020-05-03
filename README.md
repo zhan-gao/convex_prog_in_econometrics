@@ -1,7 +1,10 @@
 # Implementing Convex Optimization in R: Two Econometric Examples
 
-This repository hosts code for estimation methods in 
+This repository hosts the files and code for
 
-* Zhan Gao and Zhentao Shi: [*Implementing Convex Optimization in R: Two Econometric Examples*](https://arxiv.org/abs/1806.10423).
+* Zhan Gao and Zhentao Shi (2020): Implementing Convex Optimization in R: Two Econometric Examples
+  * [Main text](https://github.com/zhan-gao/convex_prog_in_econometrics/blob/master/main_lyx.pdf)
+  * [Supplement](https://github.com/zhan-gao/convex_prog_in_econometrics/blob/master/main_supp_lyx.pdf)
+  * The R script `gao-shi-rmosek.R` to replicate the simulation studies
 
-After local installation of the convex solver [`Mosek`](https://docs.mosek.com/9.1/install/index.html) and the R package `Rmosek`, one can  run the R script `gao-shi-rmosek.R` to replicate the simulation studies.
+For replication, the convex solver [`Mosek`](https://docs.mosek.com/9.1/install/index.html) and the R package `Rmosek` must be installed. 
