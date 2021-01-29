@@ -48,7 +48,7 @@ lasso.mosek <- function(x, y, lambda, rtol = 1e-6, verb = 0, intercept = TRUE, s
                       c(rep(Inf, 2 * p + n + 3)))
     }
 
-    P$dparam$intpnt_nl_tol_rel_gap <- rtol
+    P$dparam <- list(INTPNT_CO_TOL_REL_GAP=1e-5)
     z <- mosek(P, opts = list(verbose = verb))
     status <- z$sol$itr$solsta
     f <- z$sol$itr$xx
@@ -74,8 +74,8 @@ x3 = rpois(n*5, 4)
 X = matrix( c( x1, x2, x3 ), nrow = n, ncol = p )
 beta = as.matrix( c(rep(1,4), rep(0,16)) )
 e = as.matrix( rnorm(n) )
-y = X %*% beta + e
-lambda = log(p+1)/sqrt(n)
+y = 0.25+ X %*% beta + e
+lambda = 0.25
 
 
-f <- lasso.mosek(X, y, lambda, intercept = FALSE)
+f <- lasso.mosek(X, y, lambda, intercept = TRUE)
